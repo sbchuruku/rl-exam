@@ -15,19 +15,30 @@ class Env(object):
         self.canvas = Canvas(self.tk, width=500, height=400, bd=0, highlightthickness=0, bg='black')
         self.canvas.pack()
         self.tk.update()
-        
+
+        self.catch_cnt = 0
+        self.step_cnt = 0
+        self.reward = 0
+        self.done = False
+
         self.paddle = Paddle(self.canvas, 'white')
         self.balls = list()
         
     def reset(self) :
-        self.tk.update()
-        time.sleep(0.5)
         for ball in self.balls :
             ball.reset()
         self.paddle.reset()
-        self.render()
-        return self.getstate(self.paddle.x)
-    
+        self.step_cnt = 0
+        self.catch_cnt = 0
+        self.done = False
+
+    def addBall(self) :
+        colors = ['red','green','blue','white','yellow','orange']
+        random.shuffle(colors)
+        speeds = [1,2,3]
+        random.shuffle(speeds)
+        self.balls.append(Ball(self.canvas, self.paddle, colors[0],speeds[0]))
+
     def getstate(self,movement):
         paddle_pos = self.canvas.coords(self.paddle.id)
         res = []
@@ -43,39 +54,30 @@ class Env(object):
         self.paddle.draw()
         for ball in self.balls :
             ball.draw()
-            if ball.is_bottom_hit():
-                self.reset()
-            elif ball.is_paddle_hit():
-                ball.setPos(ball.x, -ball.speed)
-
+            for ball in self.balls:
+                if ball.is_bottom_hit():
+                    self.reward -= 1
+                    self.done = True
+                elif ball.is_paddle_hit():
+                    ball.setPos(ball.x, -ball.speed)
+                    self.reward += 1
+                    self.done = False
+                    self.catch_cnt += 1
             self.tk.update_idletasks()
             self.tk.update() 
             
             time.sleep(0.01)
-    
-    def addBall(self) :
-        colors = ['red','green','blue','white','yellow','orange']
-        random.shuffle(colors)
-        speeds = [1,2,3]
-        random.shuffle(speeds)
-        self.balls.append(Ball(self.canvas, self.paddle, colors[0],speeds[0]))
-    
+        return self.getstate(self.paddle.x), self.reward, self.done
+
     def step(self, action) :
+        self.step_cnt += 1
         if action == 0 or action == 1 or action == 2 :
             self.paddle.setPos(PADDLE_MOVE[action])
         else:
             rand = random.choice([0,1,2])
             self.paddle.setPos(PADDLE_MOVE[rand])
-        self.canvas.tag_raise(self.paddle)
         next_state = self.getstate(self.paddle.x)
-        for ball in self.balls :
-            if ball.is_bottom_hit():
-                reward = 100
-                done = False
-            elif ball.is_paddle_hit():
-                reward -= 100
-                done = True
-        return next_state, reward, done
+        return next_state
         
 class Ball:
     
