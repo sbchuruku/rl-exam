@@ -40,22 +40,23 @@ class SARSA_agent:
             elif value == max_value :
                 max_index_list.append(index)
         return random.choice(max_index_list)
-
-    # def savedata(self, episode, step_cnt, catch_cnt):
-    #     with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'wb') as f :
-    #         pickle.dump(self.q_table, f)
-    #
-    #     with open("D:\\rl_data\\sarsa_result.csv", 'a', newline='') as f :
-    #         writer = csv.writer(f, delimiter=',')
-    #         writer.writerow([episode, step_cnt, catch_cnt])
-    #
-    #     print("save data in episode {0}.".format(episode))
-    #
-    # def loaddata(self, episode):
-    #     with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'rb') as f:
-    #         self.q_table = pickle.load(f)
-    #
-    #     print('Load Success! Start at episode {0}'.format(episode))
+    
+    def savedata(self, episode, step_cnt, catch_cnt):
+        with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'wb') as f :
+            dd = defaultdict(self.q_table)
+            pickle.dump(dd, f)
+    
+        with open("D:\\rl_data\\sarsa_result.csv", 'a', newline='') as f :
+            writer = csv.writer(f, delimiter=',')
+            writer.writerow([episode, step_cnt, catch_cnt])
+    
+        print("save data in episode {0}.".format(episode))
+    
+    def loaddata(self, episode):
+        with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'rb') as f:
+            self.q_table = pickle.load(f)
+    
+        print('Load Success! Start at episode {0}'.format(episode))
 
 if __name__ == '__main__':
 
@@ -87,6 +88,7 @@ if __name__ == '__main__':
 
             if done :
                 print('step cnt:{}  catch_cnt:{}'.format(env.step_cnt, env.catch_cnt))
+                #agent.savedata(agent.episode, env.step, env.catch_cnt)
                 break
             
             
