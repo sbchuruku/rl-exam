@@ -54,15 +54,15 @@ class Env(object):
         self.paddle.draw()
         for ball in self.balls :
             ball.draw()
-            for ball in self.balls:
-                if ball.is_bottom_hit():
-                    self.reward -= 1
-                    self.done = True
-                elif ball.is_paddle_hit():
-                    ball.setPos(ball.x, -ball.speed)
-                    self.reward += 1
-                    self.done = False
-                    self.catch_cnt += 1
+            if ball.is_bottom_hit():
+                self.reward -= 1
+                self.done = True
+            elif ball.is_paddle_hit():
+                self.reward += 1
+                self.done = False
+                self.catch_cnt += 1
+                ball.setPos(ball.x, -ball.speed)
+                
             self.tk.update_idletasks()
             self.tk.update() 
             
