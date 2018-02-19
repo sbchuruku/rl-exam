@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from collections import defaultdict
-from environment.pingpong import Env
+from pingpong import Env
 import csv
 import pickle
 
