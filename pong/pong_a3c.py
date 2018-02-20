@@ -175,7 +175,6 @@ import numpy as np
 import threading
 import random
 import time
-import gym
 
 # 멀티쓰레딩을 위한 글로벌 변수
 global episode

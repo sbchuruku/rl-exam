@@ -4,7 +4,7 @@ import time
 
 PADDLE_MOVE = [-15, 15, 0]
 
-class Env(object):
+class Env :
     def __init__(self) :
         self.action_space = ['l', 'r', 'n']
         self.n_actions = len(self.action_space)
@@ -35,7 +35,7 @@ class Env(object):
     def addBall(self) :
         colors = ['red','green','blue','white','yellow','orange']
         random.shuffle(colors)
-        speeds = [1,2,3]
+        speeds = [3,4,5]
         random.shuffle(speeds)
         self.balls.append(Ball(self.canvas, self.paddle, colors[0],speeds[0]))
 
@@ -50,7 +50,7 @@ class Env(object):
         res.append(movement)
         return tuple(res)
         
-    def render(self) :
+    def render(self, isLearning=True) :
         self.paddle.draw()
         for ball in self.balls :
             ball.draw()
@@ -66,7 +66,8 @@ class Env(object):
             self.tk.update_idletasks()
             self.tk.update() 
             
-            time.sleep(0.01)
+            if isLearning == False :
+                time.sleep(0.01)
         return self.getstate(self.paddle.x), self.reward, self.done
 
     def step(self, action) :
@@ -120,6 +121,8 @@ class Ball:
         paddle_pos = self.canvas.coords(self.paddle.id)
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2] :
             if pos[3] >= paddle_pos[1] and pos[1] <= paddle_pos[3] :
+                self.setPos(self.x, -10)
+                self.draw()
                 return True
         return False
     

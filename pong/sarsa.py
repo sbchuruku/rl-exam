@@ -1,9 +1,8 @@
 import numpy as np
 import random
 from collections import defaultdict
-from pingpong_tkinter import Env
+from pong import Env
 import csv
-import pickle
 
 class SARSA_agent:
     def __init__(self, actions) :
@@ -13,6 +12,9 @@ class SARSA_agent:
         self.epsilon = 0.1
         self.q_table = defaultdict(lambda:[0.0, 0.0, 0.0])
         self.episode = 0
+        
+        self.all_catch_cnt = 0
+        self.all_step_cnt = 0
         
     def learn(self, state, action, reward, next_state, next_action) :
         current_q = self.q_table[state][action]
@@ -41,23 +43,62 @@ class SARSA_agent:
                 max_index_list.append(index)
         return random.choice(max_index_list)
     
-    def savedata(self, episode, step_cnt, catch_cnt):
-        with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'wb') as f :
-            dd = defaultdict(self.q_table)
-            pickle.dump(dd, f)
-    
-        with open("D:\\rl_data\\sarsa_result.csv", 'a', newline='') as f :
-            writer = csv.writer(f, delimiter=',')
-            writer.writerow([episode, step_cnt, catch_cnt])
-    
-        print("save data in episode {0}.".format(episode))
-    
-    def loaddata(self, episode):
-        with open('D:\\rl_data\\sarsa_q_table_{}.pkl'.format(episode), 'rb') as f:
-            self.q_table = pickle.load(f)
-    
-        print('Load Success! Start at episode {0}'.format(episode))
+    def savedata(self, env):
+        Fn = open('D:\\rl_data\\sarsa_q_table_{}.csv'.format(self.episode), 'w', newline='')
+        writer = csv.writer(Fn, delimiter=',')
+        writer.writerow([self.episode])
+        keys = self.q_table.keys()
+        
+        for key in keys:
+            res = list()
+            res.append(key[0])
+            idx = 1
+            for i in range(len(env.balls)*2) :
+                for j in range(len(key[idx])) :
+                    res.append(key[idx][j])
+                idx += 1
+            res.append(key[-1])
+            
+            for q in self.q_table[key] :
+                res.append(q)
+                        
+            writer.writerow(res)
+        
+        Fn.close()
 
+        Fn = open("D:\\rl_data\\sarsa_result.csv", 'a', newline='')
+        writer = csv.writer(Fn, delimiter=',')
+        writer.writerow([self.episode, self.all_step_cnt, self.all_catch_cnt])
+        Fn.close()
+
+        print("save data in episode {0}.".format(self.episode))
+        
+    def loaddata(self, episode):
+        try:
+            Fn = open('D:\\rl_data\\sarsa_q_table_{}.csv'.format(episode), 'r')
+            self.episode = int(Fn.readline().split(',')[0])
+            reader = csv.reader(Fn, delimiter=',')
+            
+            for key in reader:
+                makeKey = list()
+                makeKey.append(int(float(key[0])))
+                
+                data = list()
+                for i in range(1,(len(key)-3)+1):
+                    data.append(key[i])
+                    if i % 2 == 0 :
+                        makeKey.append(tuple(data))
+                        data.clear()
+                
+                makeKey.append(int(float(key[-4])))
+                
+                value = [float(key[-3]),float(key[-2]),float(key[-1])]
+                self.q_table[tuple(makeKey)] = value
+               
+            print('Load Success! Start at episode {0}'.format(episode))
+        except Exception:
+            print('Load Failed!')
+        
 if __name__ == '__main__':
 
     env = Env()
@@ -66,14 +107,20 @@ if __name__ == '__main__':
 
     env.addBall()
 
-    for episode in range(1000) :
-        agent.episode = episode + 1
-        print('{} episode -----------'.format(agent.episode))
+    load_episode = 1
+
+    if load_episode > 1 :
+        agent.loaddata(load_episode)
+    
+    isLearning = True
+    
+    for episode in range(load_episode,1000) :
+        print('{} episode -----------'.format(episode))
         env.reset()
 
         while True :
-
-            state, reward, done = env.render()
+            
+            state, reward, done = env.render(isLearning)
 
             action = agent.get_action(state)
 
@@ -87,8 +134,17 @@ if __name__ == '__main__':
             action = next_action
 
             if done :
-                print('step cnt:{}  catch_cnt:{}'.format(env.step_cnt, env.catch_cnt))
-                #agent.savedata(agent.episode, env.step, env.catch_cnt)
+                print('step cnt:{}  catch cnt:{}'.format(env.step_cnt, env.catch_cnt))
+                agent.all_catch_cnt += env.step_cnt
+                agent.all_step_cnt += env.catch_cnt
+                
+                if episode % 50 == 0 :
+                    agent.savedata(env)
+                    agent.all_catch_cnt = 0
+                    agent.all_step_cnt = 0
+                
+                agent.episode = episode + 1
+                
                 break
             
             
