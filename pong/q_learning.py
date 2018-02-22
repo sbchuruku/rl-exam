@@ -1,26 +1,25 @@
 import numpy as np
 import random
-from collections import defaultdict
 from pong import Env
+from collections import defaultdict
 import csv
 
-class SARSA_agent:
+class QLearning_Agent :
     def __init__(self, actions) :
         self.actions = actions
         self.learning_rate = 0.01
         self.discount_factor = 0.9
         self.epsilon = 0.1
-        self.q_table = defaultdict(lambda:[0.0, 0.0, 0.0])
+        self.q_table = defaultdict(lambda:[0.0,0.0,0.0])
         
         self.episode = 0
         self.all_catch_cnt = 0
         self.all_step_cnt = 0
-        
-    def learn(self, state, action, reward, next_state, next_action) :
-        current_q = self.q_table[state][action]
-        next_state_q = self.q_table[next_state][next_action]
-        new_q = (current_q + self.learning_rate * (reward + self.discount_factor * next_state_q - current_q))
-        self.q_table[state][action] = new_q
+    
+    def learn(self, state, action, reward, next_state) :
+        q_value = self.q_table[state][action]
+        q_new = reward + self.discount_factor * max(self.q_table[next_state])
+        self.q_table[state][action] += self.learning_rate * (q_new - q_value)
 
     def get_action(self, state) :
         if np.random.rand() < self.epsilon :
@@ -44,7 +43,7 @@ class SARSA_agent:
         return random.choice(max_index_list)
     
     def savedata(self, env):
-        Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(self.episode), 'w', newline='')
+        Fn = open('D:\\rl_data\\q_learning\\q_table_{}.csv'.format(self.episode), 'w', newline='')
         writer = csv.writer(Fn, delimiter=',')
         writer.writerow([self.episode])
         writer.writerow([self.all_step_cnt])
@@ -68,7 +67,7 @@ class SARSA_agent:
         
         Fn.close()
 
-        Fn = open("D:\\rl_data\\sarsa\\result.csv", 'a', newline='')
+        Fn = open("D:\\rl_data\\q_learning\\result.csv", 'a', newline='')
         writer = csv.writer(Fn, delimiter=',')
         writer.writerow([self.episode, self.all_step_cnt, self.all_catch_cnt])
         Fn.close()
@@ -77,7 +76,7 @@ class SARSA_agent:
         
     def loaddata(self, episode):
         try:
-            Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(episode), 'r')
+            Fn = open('D:\\rl_data\\q_learning\\q_table_{}.csv'.format(episode), 'r')
             self.episode = int(Fn.readline().split(',')[0])
             self.all_step_cnt = int(Fn.readline().split(',')[0])
             self.all_catch_cnt = int(Fn.readline().split(',')[0])
@@ -102,17 +101,17 @@ class SARSA_agent:
             print('Load Success! Start at episode {0}'.format(episode))
         except Exception:
             print('Load Failed!')
-        
+            
 if __name__ == '__main__':
 
     env = Env()
 
-    agent = SARSA_agent(actions=list(range(env.n_actions)))
+    agent = QLearning_Agent(actions=list(range(env.n_actions)))
 
     env.addBall()
 
-    load_episode = 1
-    isLearning = True
+    load_episode = 3200
+    isLearning = False
 
     if load_episode > 1 :
         agent.loaddata(load_episode)
@@ -131,10 +130,9 @@ if __name__ == '__main__':
 
             next_action = agent.get_action(next_state)
 
-            agent.learn(state, action, reward, next_state, next_action)
+            agent.learn(state, action, reward, next_state)
 
             state = next_state
-            action = next_action
 
             if done :
                 print('step cnt:{}  catch cnt:{}'.format(env.step_cnt, env.catch_cnt))
@@ -149,4 +147,3 @@ if __name__ == '__main__':
                 agent.episode = episode + 1
                 
                 break
-                        

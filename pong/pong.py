@@ -6,7 +6,7 @@ PADDLE_MOVE = [-15, 15, 0]
 
 class Env :
     def __init__(self) :
-        self.action_space = ['l', 'r', 'n']
+        self.action_space = ['left', 'right', 'none']
         self.n_actions = len(self.action_space)
         self.tk = Tk()
         self.tk.title("My Ping Pong !") 
