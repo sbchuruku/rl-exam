@@ -106,10 +106,9 @@ class SARSA_agent:
 if __name__ == '__main__':
 
     env = Env()
+    env.addBall(2)
 
     agent = SARSA_agent(actions=list(range(env.n_actions)))
-
-    env.addBall()
 
     load_episode = 1
     isLearning = True

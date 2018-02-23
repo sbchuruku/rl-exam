@@ -105,10 +105,9 @@ class QLearning_Agent :
 if __name__ == '__main__':
 
     env = Env()
+    env.addBall(2)
 
     agent = QLearning_Agent(actions=list(range(env.n_actions)))
-
-    env.addBall()
 
     load_episode = 3200
     isLearning = False

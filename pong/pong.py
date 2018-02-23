@@ -32,12 +32,13 @@ class Env :
         self.catch_cnt = 0
         self.done = False
 
-    def addBall(self) :
-        colors = ['red','green','blue','white','yellow','orange']
-        random.shuffle(colors)
-        speeds = [3,4,5]
-        random.shuffle(speeds)
-        self.balls.append(Ball(self.canvas, self.paddle, colors[0],speeds[0]))
+    def addBall(self, count) :
+        for i in range(count) :
+            colors = ['red','green','blue','white','yellow','orange']
+            random.shuffle(colors)
+            speeds = [3,4,5]
+            random.shuffle(speeds)
+            self.balls.append(Ball(self.canvas, self.paddle, colors.pop(0),speeds[0]))
 
     def getstate(self,movement):
         paddle_pos = self.canvas.coords(self.paddle.id)
