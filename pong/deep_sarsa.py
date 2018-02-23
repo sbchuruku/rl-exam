@@ -23,7 +23,7 @@ class DeepSARSA_agent :
     def load_model(self, episode) :
         self.model.load_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained{}.h5'.format(episode))
     
-    def setStateSize(self, env) :
+    def set_statesize(self, env) :
         self.state_size = 2 + (len(env.balls) * 4)
         self.model = self.build_model()
     
