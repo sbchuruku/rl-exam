@@ -106,7 +106,7 @@ class SARSA_agent:
 if __name__ == '__main__':
 
     env = Env()
-    env.addBall(2)
+    env.addBall(1)
 
     agent = SARSA_agent(actions=list(range(env.n_actions)))
 
@@ -117,16 +117,16 @@ if __name__ == '__main__':
         agent.loaddata(load_episode)
     
     for episode in range(load_episode,10000) :
-        print('{} episode -----------'.format(episode))
-        env.reset()
+        agent.episode = episode
+        state = env.reset()
 
         while True :
             
-            state, reward, done = env.render(isLearning)
+            env.render(isLearning)
 
             action = agent.get_action(state)
 
-            next_state = env.step(action)
+            next_state, reward, done = env.step(action)
 
             next_action = agent.get_action(next_state)
 
@@ -136,16 +136,14 @@ if __name__ == '__main__':
             action = next_action
 
             if done :
-                print('step cnt:{}  catch cnt:{}'.format(env.step_cnt, env.catch_cnt))
+                print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 agent.all_catch_cnt += env.step_cnt
                 agent.all_step_cnt += env.catch_cnt
                 
-                if episode % 100 == 0 :
+                if episode % 500 == 0 :
                     agent.savedata(env)
                     agent.all_catch_cnt = 0
                     agent.all_step_cnt = 0
-                
-                agent.episode = episode + 1
                 
                 break
                         

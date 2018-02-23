@@ -105,27 +105,27 @@ class QLearning_Agent :
 if __name__ == '__main__':
 
     env = Env()
-    env.addBall(2)
+    env.addBall(1)
 
     agent = QLearning_Agent(actions=list(range(env.n_actions)))
 
-    load_episode = 3200
-    isLearning = False
+    load_episode = 1
+    isLearning = True
 
     if load_episode > 1 :
         agent.loaddata(load_episode)
     
     for episode in range(load_episode,10000) :
-        print('{} episode -----------'.format(episode))
-        env.reset()
+        agent.episode = episode
+        state = env.reset()
 
         while True :
             
-            state, reward, done = env.render(isLearning)
+            env.render(isLearning)
 
             action = agent.get_action(state)
 
-            next_state = env.step(action)
+            next_state, reward, done = env.step(action)
 
             next_action = agent.get_action(next_state)
 
@@ -134,15 +134,13 @@ if __name__ == '__main__':
             state = next_state
 
             if done :
-                print('step cnt:{}  catch cnt:{}'.format(env.step_cnt, env.catch_cnt))
+                print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 agent.all_catch_cnt += env.step_cnt
                 agent.all_step_cnt += env.catch_cnt
                 
-                if episode % 100 == 0 :
+                if episode % 500 == 0 :
                     agent.savedata(env)
                     agent.all_catch_cnt = 0
                     agent.all_step_cnt = 0
-                
-                agent.episode = episode + 1
                 
                 break

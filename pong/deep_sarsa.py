@@ -17,9 +17,6 @@ class DeepSARSA_agent :
         self.epsilon_decay = 0.9999
         self.epsilon_min = 0.01
         
-        self.all_catch_cnt = 0
-        self.all_step_cnt = 0
-        
     def load_model(self, episode) :
         self.model.load_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained{}.h5'.format(episode))
     
@@ -79,7 +76,7 @@ if __name__ == '__main__' :
     load_episode = 1
     
     env = Env()
-    env.addBall(2)
+    env.addBall(1)
     
     agent = DeepSARSA_agent()
     
@@ -92,17 +89,16 @@ if __name__ == '__main__' :
 
     for episode in range(load_episode,EPISODES) :
         agent.episode = episode
-        env.reset()
+        state = env.reset()
+        state = agent.state_flatten(env,state)
 
         while True :
             
-            state, reward, done = env.render(isLearning)
+            done = env.render(isLearning)
             
-            state = agent.state_flatten(env,state)
-
             action = agent.get_action(state)
 
-            next_state = env.step(action)
+            next_state,reward,done = env.step(action)
             
             next_state = agent.state_flatten(env, next_state)
 
@@ -113,19 +109,17 @@ if __name__ == '__main__' :
             state = next_state
             state = copy.deepcopy(next_state)
 
-
             if done :
-                agent.all_step_cnt += env.step_cnt
-                agent.all_catch_cnt += env.catch_cnt
                 
-                scores.append(agent.all_catch_cnt)
+                scores.append(env.catch_cnt)
                 episodes.append(episode)
                 pylab.plot(episodes, scores, 'b')
                 pylab.savefig('d:\\rl_data\\deep_sarsa\\deep-sarsa.png')
-                print('episode:{} / score:{} / step:{} / epsilon:{}'
-                      .format(episode, agent.all_catch_cnt, agent.all_step_cnt, agent.epsilon))
-                agent.all_catch_cnt = 0
-                agent.all_step_cnt = 0
+                print('episode:{} / catch:{} / step:{} / epsilon:{}'
+                      .format(episode, env.catch_cnt, env.step_cnt, agent.epsilon))
+                
+                env.catch_cnt = 0
+                env.step_cnt = 0
                 
                 if episode % 50 == 0 :
                     agent.model.save_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained_{}.h5'.format(episode))
