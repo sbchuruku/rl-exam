@@ -31,6 +31,8 @@ class Env :
         self.step_cnt = 0
         self.catch_cnt = 0
         self.done = False
+        rand = random.choice([0,1,2])
+        return self.getstate(PADDLE_MOVE[rand])
 
     def addBall(self, count) :
         for i in range(count) :
@@ -55,21 +57,12 @@ class Env :
         self.paddle.draw()
         for ball in self.balls :
             ball.draw()
-            if ball.is_bottom_hit():
-                self.reward -= 1
-                self.done = True
-            elif ball.is_paddle_hit():
-                self.reward += 1
-                self.done = False
-                self.catch_cnt += 1
-                ball.setPos(ball.x, -ball.speed)
                 
-            self.tk.update_idletasks()
-            self.tk.update() 
-            
-            if isLearning == False :
-                time.sleep(0.01)
-        return self.getstate(self.paddle.x), self.reward, self.done
+        self.tk.update_idletasks()
+        self.tk.update() 
+        
+        if isLearning == False :
+            time.sleep(0.01)
 
     def step(self, action) :
         self.step_cnt += 1
@@ -78,8 +71,20 @@ class Env :
         else:
             rand = random.choice([0,1,2])
             self.paddle.setPos(PADDLE_MOVE[rand])
+            
         next_state = self.getstate(self.paddle.x)
-        return next_state
+        
+        for ball in self.balls :
+            ball.draw()
+            if ball.is_bottom_hit():
+                self.reward -= 1
+                self.done = True
+            elif ball.is_paddle_hit():
+                self.reward += 1
+                self.done = False
+                self.catch_cnt += 1
+        
+        return next_state, self.reward, self.done
         
 class Ball:
     
