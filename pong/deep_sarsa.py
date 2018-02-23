@@ -7,8 +7,6 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.models import Sequential
 
-EPISODES = 10000
-
 class DeepSARSA_agent :
     def __init__(self) :
         self.action_space = [0,1,2]
@@ -19,7 +17,6 @@ class DeepSARSA_agent :
         self.epsilon_decay = 0.9999
         self.epsilon_min = 0.01
         
-        self.episode = 0
         self.all_catch_cnt = 0
         self.all_step_cnt = 0
         
@@ -77,6 +74,7 @@ class DeepSARSA_agent :
 
 if __name__ == '__main__' :
     
+    EPISODES = 10000
     isLearning = True
     load_episode = 1
     
@@ -93,7 +91,7 @@ if __name__ == '__main__' :
     scores, episodes = list(), list()
 
     for episode in range(load_episode,EPISODES) :
-
+        agent.episode = episode
         env.reset()
 
         while True :
@@ -121,7 +119,7 @@ if __name__ == '__main__' :
                 agent.all_catch_cnt += env.catch_cnt
                 
                 scores.append(agent.all_catch_cnt)
-                episodes.append(agent.episode)
+                episodes.append(episode)
                 pylab.plot(episodes, scores, 'b')
                 pylab.savefig('d:\\rl_data\\deep_sarsa\\deep-sarsa.png')
                 print('episode:{} / score:{} / step:{} / epsilon:{}'
@@ -131,7 +129,5 @@ if __name__ == '__main__' :
                 
                 if episode % 50 == 0 :
                     agent.model.save_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained_{}.h5'.format(episode))
-                
-                agent.episode = episode + 1
                 
                 break
