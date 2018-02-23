@@ -83,7 +83,7 @@ if __name__ == '__main__' :
     
     agent = DeepSARSA_agent()
     
-    agent.setStateSize(env)
+    agent.set_statesize(env)
     
     if load_episode != 1 :
         agent.load_model(load_episode)
