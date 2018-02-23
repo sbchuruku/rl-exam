@@ -4,7 +4,7 @@ import random
 import numpy as np
 from pong import Env
 from keras.layers import Dense
-from keras.optimizers import Adam
+from keras.optimizers import RMSprop
 from keras.models import Sequential
 
 class DeepSARSA_agent :
@@ -18,7 +18,7 @@ class DeepSARSA_agent :
         self.epsilon_min = 0.01
         
     def load_model(self, episode) :
-        self.model.load_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained{}.h5'.format(episode))
+        self.model.load_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained_{}.h5'.format(episode))
     
     def set_statesize(self, env) :
         self.state_size = 2 + (len(env.balls) * 4)
@@ -29,7 +29,7 @@ class DeepSARSA_agent :
         model.add(Dense(self.state_size * 2, input_dim=self.state_size, activation='relu'))
         model.add(Dense(self.state_size * 2, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss='mse', optimizer=RMSprop(lr=self.learning_rate))
         return model
     
     def get_action(self, state) :
@@ -121,7 +121,7 @@ if __name__ == '__main__' :
                 env.catch_cnt = 0
                 env.step_cnt = 0
                 
-                if episode % 50 == 0 :
+                if episode % 100 == 0 :
                     agent.model.save_weights('d:\\rl_data\\deep_sarsa\\deep_sarsa_trained_{}.h5'.format(episode))
                 
                 break
