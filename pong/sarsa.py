@@ -13,10 +13,6 @@ class SARSA_agent:
         self.epsilon = 0.1
         # 딕셔너리를 만드는데 value값을 [0.0, 0.0, 0.0] 으로 받겠다.
         self.q_table = defaultdict(lambda:[0.0, 0.0, 0.0])
-        self.episode = 0
-        # 일정한 에피소드까지 counting 하기 위한 변수
-        self.all_catch_cnt = 0
-        self.all_step_cnt = 0
         
     # 큐함수 구현
     def learn(self, state, action, reward, next_state, next_action) :
@@ -55,47 +51,54 @@ class SARSA_agent:
         # max 값은 같은데 max 값을 가진 index 가 여러개 일 때 그중에 하나의 index를 random으로 리턴한다.
         return random.choice(max_index_list)
     
-    def savedata(self, env):
-        Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(self.episode), 'w', newline='')
+    # 에피소드로 저장하는 함수
+    def savedata(self, episode):
+        Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(episode), 'w', newline='')
         writer = csv.writer(Fn, delimiter=',')
-        writer.writerow([self.episode])
-        writer.writerow([self.all_step_cnt])
-        writer.writerow([self.all_catch_cnt])
+        # 에피소드
+        writer.writerow([episode])
+        # q_table 의 키(state)들
         keys = self.q_table.keys()
         
         for key in keys:
             res = list()
+            # 패들의 x 좌표값
             res.append(key[0])
+            # 공의 갯수만큼 위치(x,y) 값, 속도(방향) pair 로 2개씩 생기고 그 정보에 대한 idx 값으로
+            # 저장하기위한 반복문
             idx = 1
             for i in range(len(env.balls)*2) :
                 for j in range(len(key[idx])) :
                     res.append(key[idx][j])
                 idx += 1
-            #res.append(key[-1])
             
+            # 위에서 적용된 키값에 대한 value 저장([0.0,0.0,0.0] 형태 이므로 반복문을 사용해 세개 다 저장)
             for q in self.q_table[key] :
                 res.append(q)
-                        
+            
             writer.writerow(res)
         
         Fn.close()
 
         Fn = open("D:\\rl_data\\sarsa\\result.csv", 'a', newline='')
         writer = csv.writer(Fn, delimiter=',')
-        writer.writerow([self.episode, self.all_step_cnt, self.all_catch_cnt])
+        # 에피소드, 에피소드당 스탭수, 에피소드당 패들의 히트수 저장
+        writer.writerow([episode, self.all_step_cnt, self.all_catch_cnt])
         Fn.close()
 
-        print("save data in episode {0}.".format(self.episode))
-        
+        print("save data in episode {0}.".format(episode))
+    
+    # 원하는 에피소드 파일을 불러오는 함수    
     def loaddata(self, episode):
         try:
             Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(episode), 'r')
             self.episode = int(Fn.readline().split(',')[0])
-            self.all_step_cnt = int(Fn.readline().split(',')[0])
-            self.all_catch_cnt = int(Fn.readline().split(',')[0])
             reader = csv.reader(Fn, delimiter=',')
             
             for key in reader:
+                # print(key)
+                # ['340.0', '363.0', '5.0', '3', '3', '0.0', '-1.02', '0.0']
+                # q_table 의 키를 만드는 과정
                 makeKey = list()
                 makeKey.append(int(float(key[0])))
                 
@@ -106,56 +109,68 @@ class SARSA_agent:
                         makeKey.append(tuple(data))
                         data.clear()
                 
-                #makeKey.append(int(float(key[-4])))
-                
+                # q_table 의 value 를 만드는 과정
                 value = [float(key[-3]),float(key[-2]),float(key[-1])]
+                # q_table 에 key 와 value 로 저장
                 self.q_table[tuple(makeKey)] = value
                
             print('Load Success! Start at episode {0}'.format(episode))
         except Exception:
             print('Load Failed!')
-        
+
+# 실행부         
 if __name__ == '__main__':
 
+    # 환경생성
     env = Env()
+    # 공 추가
     env.addBall(1)
 
+    # agent 생성
     agent = SARSA_agent(actions=list(range(env.n_actions)))
 
-    load_episode = 1
-    isLearning = True
+    # 로드할 에피소드
+    load_episode = 300
+    # 훈련 flag
+    isLearning = False
 
+    # 로드할 에피소드가 1보다 크면 로드함수 
     if load_episode > 1 :
         agent.loaddata(load_episode)
     
+    # 에피소드 수행
     for episode in range(load_episode,10000) :
-        agent.episode = episode
+        # 에피소드 시작시 reset & 현재 state 가져오기  
         state = env.reset()
 
         while True :
-            
+            # 현재 state 대로 그리기
             env.render(isLearning)
-
+            
+            # 현재 action = state 를 입력해서 q_table 의 value 를 argmax 한 것
             action = agent.get_action(state)
-
+            
+            # 한 타임스탭 진행 후 next_state, reward, done 가져오기
             next_state, reward, done = env.step(action)
-
+            
+            # next_state 로 next_action 구하기
             next_action = agent.get_action(next_state)
 
+            # 공식에 의한 학습
             agent.learn(state, action, reward, next_state, next_action)
-
+            
+            # 현재 state, action 값 갱신
             state = next_state
             action = next_action
 
+            # 에피소드 종료
             if done :
+                # 결과 확인용 출력
                 print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
-                agent.all_catch_cnt += env.step_cnt
-                agent.all_step_cnt += env.catch_cnt
                 
-                if episode % 500 == 0 :
-                    agent.savedata(env)
-                    agent.all_catch_cnt = 0
-                    agent.all_step_cnt = 0
+                # 100 에피소드 마다 데이터 저
+                if episode % 100 == 0 :
+                    agent.savedata(episode)
                 
                 break
                         
