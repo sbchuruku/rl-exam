@@ -50,8 +50,8 @@ class Env :
             self.balls.append(Ball(self.canvas, self.paddle, colors.pop(0),speeds[0]))
     
     # 아래의 키를 리턴해주는 함수
-    # ex : (190.0, (246.0, 291.0), (3, 3), -15)
-    # 패들 x0좌표, 공 x,y좌표, 공의 x,y값(속도), 패들의 움직이는 방향 
+    # ex : (190.0, (246.0, 291.0), (3, 3))
+    # 패들 x0좌표, 공 x,y좌표, 공의 x,y값(속도) 
     def getstate(self,movement):
         paddle_pos = self.canvas.coords(self.paddle.id)
         res = []
@@ -60,7 +60,6 @@ class Env :
             ball_pos = self.canvas.coords(ball.id) 
             res.append((ball_pos[0],ball_pos[1]))
             res.append((ball.x,ball.y))
-        #res.append(movement)
         return tuple(res)
     
     # 공하고 패들을 지속적으로 그리는 함수
@@ -73,7 +72,7 @@ class Env :
         self.tk.update() 
         # isLearning : True면 학습을 빠르게 False면 천천히 학습
         if isLearning == False :
-            time.sleep(0.01)
+            time.sleep(0.03)
             
     # 한 타임스텝마다 진행되는 함수
     def step(self, action) :
@@ -85,8 +84,9 @@ class Env :
         else:
             rand = random.choice([0,1,2])
             self.paddle.setPos(PADDLE_MOVE[rand])
-            
+        
         next_state = self.getstate(self.paddle.x)
+        
         # 바닥을 치면 -1 보상을 주고 done 변수를 True
         # 패들이 치면 +1 보상을 주고 done은 false 유지 받은 횟수를 1 증가 시킨다
         for ball in self.balls :
@@ -149,7 +149,7 @@ class Ball:
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2] :
             if pos[3] >= paddle_pos[1] and pos[1] <= paddle_pos[3] :
                 # 보상에 대한 카운팅 버그를 해결하기 위해 패들의 높이 만큼 공을 위로 보냄
-                self.setPos(self.x, -10)
+                self.setPos(self.x, -6)
                 self.draw()
                 return True
         return False
@@ -177,7 +177,7 @@ class Paddle:
         self.canvas_width = self.canvas.winfo_width()
         self.canvas_height = self.canvas.winfo_height()
         # 패들을 가로 100 세로 10으로 만들기
-        self.id = canvas.create_rectangle(0,0,100,10,fill=color)
+        self.id = canvas.create_rectangle(0,0,100,6,fill=color)
         # 캔버스 전체 높이의 0.8 비율에 위치
         self.height_pos = int(self.canvas_height * 0.8)
         # 패들을 캔버스 가로 중앙에 위치 
