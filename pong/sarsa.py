@@ -14,6 +14,10 @@ class SARSA_agent:
         # 딕셔너리를 만드는데 value값을 [0.0, 0.0, 0.0] 으로 받겠다.
         self.q_table = defaultdict(lambda:[0.0, 0.0, 0.0])
         
+        # 저장시 합계를 구하기 위한 변수
+        self.all_catch_cnt = 0
+        self.all_step_cnt = 0
+        
     # 큐함수 구현
     def learn(self, state, action, reward, next_state, next_action) :
         # q table에서 state 와 action 을 넣어서 현재 q값을 구한다.
@@ -34,8 +38,8 @@ class SARSA_agent:
             action = self.arg_max(state_action)
         return action
     
-    @staticmethod
     # 각 방향에 대한 가치 중 최고의 값의 인덱스를 리턴해주는 함수
+    @staticmethod
     def arg_max(state_action) :
         max_index_list = []
         # max_value 값 초기화
@@ -52,7 +56,7 @@ class SARSA_agent:
         return random.choice(max_index_list)
     
     # 에피소드로 저장하는 함수
-    def savedata(self, episode):
+    def savedata(self, episode, env):
         Fn = open('D:\\rl_data\\sarsa\\q_table_{}.csv'.format(episode), 'w', newline='')
         writer = csv.writer(Fn, delimiter=',')
         # 에피소드
@@ -130,9 +134,9 @@ if __name__ == '__main__':
     agent = SARSA_agent(actions=list(range(env.n_actions)))
 
     # 로드할 에피소드
-    load_episode = 300
+    load_episode = 1
     # 훈련 flag
-    isLearning = False
+    isLearning = True
 
     # 로드할 에피소드가 1보다 크면 로드함수 
     if load_episode > 1 :
@@ -167,10 +171,16 @@ if __name__ == '__main__':
             if done :
                 # 결과 확인용 출력
                 print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
+                # 저장용 데이터 변수에 값 갱신
+                agent.all_step_cnt += env.step_cnt
+                agent.all_catch_cnt += env.catch_cnt                
                 
-                # 100 에피소드 마다 데이터 저
-                if episode % 100 == 0 :
-                    agent.savedata(episode)
+                # 100 에피소드 마다 데이터 저장
+                if episode % 500 == 0 :
+                    agent.savedata(episode,env)
+                    # 저장후 초기화
+                    agent.all_step_cnt = 0
+                    agent.all_catch_cnt = 0
                 
                 break
                         
