@@ -18,11 +18,14 @@ class Env :
         self.canvas.pack()
         self.tk.update()
         
-        #agent 에서 사용되는 변수
+        # agent 에서 사용되는 변수
         self.catch_cnt = 0
         self.step_cnt = 0
         self.reward = 0
         self.done = False
+        
+        # 경로로 reward 처리를 위한 변수
+        self.reward_path = list()
 
         self.paddle = Paddle(self.canvas, 'white')
         self.balls = list()
@@ -86,9 +89,8 @@ class Env :
             self.paddle.setPos(PADDLE_MOVE[rand])
         
         next_state = self.getstate(self.paddle.x)
+        self.reward_path.append(next_state)
         
-        # 패들이 놓치면 -1 보상을 주고 done 변수를 True
-        # 패들이 치면 +1 보상을 주고 done은 false 유지 받은 횟수를 1 증가 시킨다
         for ball in self.balls :
             ball.draw()
             if ball.is_miss_paddle():
