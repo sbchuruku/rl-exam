@@ -87,11 +87,11 @@ class Env :
         
         next_state = self.getstate(self.paddle.x)
         
-        # 바닥을 치면 -1 보상을 주고 done 변수를 True
+        # 패들이 놓치면 -1 보상을 주고 done 변수를 True
         # 패들이 치면 +1 보상을 주고 done은 false 유지 받은 횟수를 1 증가 시킨다
         for ball in self.balls :
             ball.draw()
-            if ball.is_bottom_hit():
+            if ball.is_miss_paddle():
                 self.reward -= 1
                 self.done = True
             elif ball.is_paddle_hit():
@@ -162,6 +162,15 @@ class Ball:
     def is_bottom_hit(self) :
         pos = self.canvas.coords(self.id)
         if pos[3] >= self.canvas_height :
+            self.y = -self.speed
+            self.canvas.move(self.id, self.x, self.y)
+            return True
+        return False
+    
+    def is_miss_paddle(self) :
+        paddle_pos = self.canvas.coords(self.paddle.id)
+        pos = self.canvas.coords(self.id)
+        if self.y > 0 and paddle_pos[3] < pos[1] :
             self.y = -self.speed
             self.canvas.move(self.id, self.x, self.y)
             return True
