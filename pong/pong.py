@@ -98,6 +98,7 @@ class Env :
                 self.reward += 1
                 self.done = False
                 self.catch_cnt += 1
+                ball.setPos(ball.x, -ball.start_speed)
         
         return next_state, self.reward, self.done
         
@@ -149,7 +150,7 @@ class Ball:
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2] :
             if pos[3] >= paddle_pos[1] and pos[1] <= paddle_pos[3] :
                 # 보상에 대한 카운팅 버그를 해결하기 위해 패들의 높이 만큼 공을 위로 보냄
-                self.setPos(self.x, -6)
+                self.setPos(self.x, -10)
                 self.draw()
                 return True
         return False
@@ -177,7 +178,7 @@ class Paddle:
         self.canvas_width = self.canvas.winfo_width()
         self.canvas_height = self.canvas.winfo_height()
         # 패들을 가로 100 세로 10으로 만들기
-        self.id = canvas.create_rectangle(0,0,100,6,fill=color)
+        self.id = canvas.create_rectangle(0,0,100,10,fill=color)
         # 캔버스 전체 높이의 0.8 비율에 위치
         self.height_pos = int(self.canvas_height * 0.8)
         # 패들을 캔버스 가로 중앙에 위치 
