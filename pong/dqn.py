@@ -6,6 +6,7 @@ from keras.layers import Dense
 from keras.optimizers import RMSprop
 from keras.models import Sequential
 from pong import Env
+from pickle
 
 class DQN_Agent :
     def __init__(self, env) :
@@ -13,20 +14,22 @@ class DQN_Agent :
         self.discount_factor = 0.99
         self.learning_rate = 0.001
         self.epsilon = 1.0
-        self.epsilon_decay = 0.999
+        self.epsilon_decay = 0.9999
         self.epsilon_min = 0.01
         self.batch_size = 64
         self.train_start = 1000
         
         self.memory = deque(maxlen=10000)
         
-        self.state_size = 2 + (len(env.balls) * 4)
+        self.state_size = 1 + (len(env.balls) * 4)
         self.action_size = env.n_actions
         self.model = self.build_model()
         self.target_model = self.build_model()
     
     def load_model(self, episode) :
         self.model.load_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(episode))
+        with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
+            self.epsilon = pickle.load(f)
     
     def build_model(self) :
         model = Sequential()
@@ -87,7 +90,6 @@ class DQN_Agent :
             for j in range(len(state[idx])) :
                 res.append(state[idx][j])
             idx += 1
-        res.append(state[-1])
         
         return np.reshape(res,[1,self.state_size])
         
@@ -131,7 +133,7 @@ if __name__ == '__main__' :
             if done :
                 agent.update_target_model()
                 
-                scores.append(score)
+                scores.append(env.catch_cnt)
                 episodes.append(e)
                 pylab.plot(episodes, scores, 'b')
                 pylab.savefig('d:\\rl_data\\dqn\\dqn_result.png')
@@ -140,6 +142,8 @@ if __name__ == '__main__' :
                 
                 if e % 100 == 0 :
                     agent.model.save_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(e))
+                    with open('d:\\rl_data\\reinforce\\epsilon_{}.bin'.format(episode),'wb') as f :
+                        pickle.dump(agent.epsilon,f)
                 break
     
     

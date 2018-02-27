@@ -6,24 +6,26 @@ from keras.layers import Dense
 from keras.optimizers import RMSprop
 from keras.models import Sequential
 from keras import backend as K
+import pickle
 
 class Reinforce_Agent :
-    def __init__(self) :
-        self.action_space = [0,1,2]
+    def __init__(self, env) :
+        self.action_space = ['left','right','none']
         self.action_size = len(self.action_space)
         self.discount_factor = 0.99
         self.learning_rate = 0.001
+        
+        self.state_size = 1 + (len(env.balls) * 4)
+        self.model = self.build_model()
+        self.optimizer = self.build_optimizer()
         
         self.states, self.actions, self.rewards = list(), list(), list()
     
     def load_model(self, episode) :
         self.model.load_weights('d:\\rl_data\\reinforce\\reinforce_trained_{}.h5'.format(episode))
+        with open('d:\\rl_data\\reinforce\\epsilon_{}.bin'.format(episode),'rb') as f :
+            self.epsilon = pickle.load(f)
     
-    def set_statesize(self, env) :
-        self.state_size = 2 + (len(env.balls) * 4)
-        self.model = self.build_model()
-        self.optimizer = self.build_optimizer()
-        
     def build_model(self) :
         model = Sequential()
         model.add(Dense(self.state_size * 2, input_dim=self.state_size, activation='relu'))
@@ -78,7 +80,6 @@ class Reinforce_Agent :
             for j in range(len(state[idx])) :
                 res.append(state[idx][j])
             idx += 1
-        res.append(state[-1])
         
         return np.reshape(res,[1,self.state_size])
 
@@ -91,9 +92,7 @@ if __name__ == '__main__' :
     env = Env()
     env.addBall(1)
     
-    agent = Reinforce_Agent()
-    
-    agent.set_statesize(env)
+    agent = Reinforce_Agent(env)
     
     if load_episode != 1 :
         agent.load_model(load_episode)
@@ -130,12 +129,13 @@ if __name__ == '__main__' :
                 episodes.append(episode)
                 pylab.plot(episodes, scores, 'b')
                 pylab.savefig('d:\\rl_data\\reinforce\\reinforce.png')
-                print('episode:{} / catch:{} / step:{}'.format(episode, env.catch_cnt, env.step_cnt))
+                print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 
                 env.catch_cnt = 0
                 env.step_cnt = 0
                 
                 if episode % 100 == 0 :
                     agent.model.save_weights('d:\\rl_data\\reinforce\\reinforce_trained_{}.h5'.format(episode))
-                
+                    with open('d:\\rl_data\\reinforce\\epsilon_{}.bin'.format(episode),'wb') as f :
+                        pickle.dump(agent.epsilon,f)
                 break
