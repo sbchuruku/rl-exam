@@ -1,7 +1,6 @@
 from tkinter import *
 import random
 import time
-import pyscreenshot as ImageGrab
 
 # paddle 방향 상수
 PADDLE_MOVE = [-15, 15, 0]
@@ -40,6 +39,7 @@ class Env :
         self.step_cnt = 0
         self.catch_cnt = 0
         self.done = False
+        self.reward = 0
         # 리셋 후 패들이 최초로 움직일 방향 랜덤 설정
         rand = random.choice([0,1,2])
         return self.getstate(PADDLE_MOVE[rand])
@@ -92,13 +92,15 @@ class Env :
         next_state = self.getstate(self.paddle.x)
         self.reward_path.append([next_state,action])
         
+        self.reward += 1
+        
         for ball in self.balls :
             ball.draw()
             if ball.is_miss_paddle():
-                self.reward -= 1
+                self.reward -= 1000
                 self.done = True
             elif ball.is_paddle_hit():
-                self.reward += 1
+                self.reward += 100
                 self.done = False
                 self.catch_cnt += 1
                 ball.setPos(ball.x, -ball.start_speed)
