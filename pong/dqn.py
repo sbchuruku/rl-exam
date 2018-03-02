@@ -6,18 +6,18 @@ from keras.layers import Dense
 from keras.optimizers import RMSprop
 from keras.models import Sequential
 from pong import Env
-from pickle
+import pickle
 
 class DQN_Agent :
     def __init__(self, env) :
         # 하이퍼 파라미터        
         self.discount_factor = 0.99
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         self.epsilon = 1.0
-        self.epsilon_decay = 0.9999
+        self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
-        self.batch_size = 64
-        self.train_start = 1000
+        self.batch_size = 128
+        self.train_start = 5000
         
         self.memory = deque(maxlen=10000)
         
@@ -30,12 +30,14 @@ class DQN_Agent :
         self.model.load_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(episode))
         with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
             self.epsilon = pickle.load(f)
+        with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(e),'rb') as f :
+            self.memory = pickle.load(f)
     
     def build_model(self) :
         model = Sequential()
-        model.add(Dense(self.state_size * 2, input_dim=self.state_size, activation='relu', 
+        model.add(Dense(24, input_dim=self.state_size, activation='relu', 
                         kernel_initializer='he_uniform'))
-        model.add(Dense(self.state_size * 2, activation='relu', kernel_initializer='he_uniform'))
+        model.add(Dense(24, activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(self.action_size, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
         model.compile(loss='mse', optimizer=RMSprop(lr=self.learning_rate))
@@ -137,13 +139,15 @@ if __name__ == '__main__' :
                 episodes.append(e)
                 pylab.plot(episodes, scores, 'b')
                 pylab.savefig('d:\\rl_data\\dqn\\dqn_result.png')
-                print('episode:{} / catch:{} / step:{} / epsilon:{}'
-                      .format(e, env.catch_cnt, env.step_cnt, agent.epsilon))
+                print('episode:{} / catch:{} / step:{} / epsilon:{} / memory:{}'
+                      .format(e, env.catch_cnt, env.step_cnt, agent.epsilon, len(agent.memory)))
                 
                 if e % 100 == 0 :
                     agent.model.save_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(e))
-                    with open('d:\\rl_data\\reinforce\\epsilon_{}.bin'.format(episode),'wb') as f :
+                    with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.epsilon,f)
+                    with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(e),'wb') as f :
+                        pickle.dump(agent.memory,f)
                 break
     
     

@@ -125,13 +125,14 @@ if __name__ == '__main__':
 
             next_state, reward, done = env.step(action)
 
-            next_action = agent.get_action(next_state)
+            next_action = agent.get_action(next_state) 
 
             agent.learn(state, action, reward, next_state)
 
             state = next_state
 
             if done :
+                env.screen_capture(str(episode))
                 print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 agent.all_step_cnt += env.step_cnt
                 agent.all_catch_cnt += env.catch_cnt

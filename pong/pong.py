@@ -1,6 +1,7 @@
 from tkinter import *
 import random
 import time
+import pyscreenshot as ImageGrab
 
 # paddle 방향 상수
 PADDLE_MOVE = [-15, 15, 0]
@@ -48,7 +49,7 @@ class Env :
         for i in range(count) :
             colors = ['red','green','blue','white','yellow','orange']
             random.shuffle(colors)
-            speeds = [3,4,5]
+            speeds = [3,3,3]
             random.shuffle(speeds)
             self.balls.append(Ball(self.canvas, self.paddle, colors.pop(0),speeds[0]))
     
@@ -89,7 +90,7 @@ class Env :
             self.paddle.setPos(PADDLE_MOVE[rand])
         
         next_state = self.getstate(self.paddle.x)
-        self.reward_path.append(next_state)
+        self.reward_path.append([next_state,action])
         
         for ball in self.balls :
             ball.draw()
@@ -103,6 +104,14 @@ class Env :
                 ball.setPos(ball.x, -ball.start_speed)
         
         return next_state, self.reward, self.done
+    
+    def get_reward_path(self) :
+        return reversed(self.reward_path)
+    
+    def screen_capture(self,num) :
+        img = ImageGrab.grab(bbox=self.canvas.bbox())
+        img.save('./screen_{}'.format(num))
+        img.show()
         
 class Ball:
     

@@ -16,12 +16,29 @@ class QLearning_Agent :
         
         self.all_step_cnt = 0
         self.all_catch_cnt = 0
+        
+        self.reward = 0
     
     # 큐함수에 대한 벨만최적방정식 적용하여 학습하는 함수
     def learn(self, state, action, reward, next_state) :
         q_value = self.q_table[state][action]
         q_new = reward + self.discount_factor * max(self.q_table[next_state])
         self.q_table[state][action] += self.learning_rate * (q_new - q_value)
+        
+    def learn_path(self, reward_path, isMiss) :
+        reward = 0
+        if isMiss :
+            reward = -10
+        else :
+            reward = 10
+        
+        idx = 0
+        for p in reward_path :
+            q_value = self.q_table[p[0]][p[1]]
+            idx += 1
+            q_new = reward + self.discount_factor * \
+                max(self.q_table[reward_path[idx][0]][reward_path[idx][1]])
+            self.q_table[p[0]][p[1]] += 
     
     # e-greedy(epsilon + greedy) 알고리즘으로 action 을 return하는 함수 
     def get_action(self, state) :
@@ -127,11 +144,14 @@ if __name__ == '__main__':
 
             next_action = agent.get_action(next_state)
 
-            agent.learn(state, action, reward, next_state)
+            #agent.learn(state, action, reward, next_state)
+            
+            reward_path = env.get_reward_path()
 
             state = next_state
 
             if done :
+                agent.learn_path(reward_path,True)
                 print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 agent.all_step_cnt += env.step_cnt
                 agent.all_catch_cnt += env.catch_cnt
@@ -142,3 +162,6 @@ if __name__ == '__main__':
                     agent.all_catch_cnt = 0
                 
                 break
+            else :
+                agent.learn_path(reward_path,False)
+                
