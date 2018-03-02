@@ -17,12 +17,13 @@ class DQN_Agent :
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
         self.batch_size = 128
-        self.train_start = 5000
+        self.train_start = 10000
         
-        self.memory = deque(maxlen=10000)
+        self.memory = deque(maxlen=20000)
         
         self.state_size = 1 + (len(env.balls) * 4)
         self.action_size = env.n_actions
+        
         self.model = self.build_model()
         self.target_model = self.build_model()
     
@@ -30,7 +31,7 @@ class DQN_Agent :
         self.model.load_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(episode))
         with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
             self.epsilon = pickle.load(f)
-        with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(e),'rb') as f :
+        with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(episode),'rb') as f :
             self.memory = pickle.load(f)
     
     def build_model(self) :
@@ -126,7 +127,7 @@ if __name__ == '__main__' :
         
             agent.append_sample(state, action, reward, next_state, done)
             
-            if len(agent.memory) >= agent.train_start :
+            if len(agent.memory) >= agent.train_start and isLearning :
                 agent.train_model()
                 
             score += reward
