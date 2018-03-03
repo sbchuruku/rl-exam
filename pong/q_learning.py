@@ -132,7 +132,6 @@ if __name__ == '__main__':
             state = next_state
 
             if done :
-                env.screen_capture(str(episode))
                 print('episode:{} / step:{} / catch:{}'.format(episode, env.step_cnt, env.catch_cnt))
                 agent.all_step_cnt += env.step_cnt
                 agent.all_catch_cnt += env.catch_cnt
