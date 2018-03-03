@@ -23,12 +23,11 @@ class Env :
         self.step_cnt = 0
         self.reward = 0
         self.done = False
+        self.miss_cnt = 0
         
-        # 경로로 reward 처리를 위한 변수
-        self.reward_path = list()
-
         self.paddle = Paddle(self.canvas, 'white')
         self.balls = list()
+        self.alives = list()
 
     # 패들, 공의 갯수만큼 전부 리셋하고 최초 state 반환    
     def reset(self) : 
@@ -40,6 +39,7 @@ class Env :
         self.catch_cnt = 0
         self.done = False
         self.reward = 0
+        self.miss_cnt = 0
         # 리셋 후 패들이 최초로 움직일 방향 랜덤 설정
         rand = random.choice([0,1,2])
         return self.getstate(PADDLE_MOVE[rand])
@@ -48,10 +48,8 @@ class Env :
     def addBall(self, count) :
         for i in range(count) :
             colors = ['red','green','blue','white','yellow','orange']
-            random.shuffle(colors)
-            speeds = [3,3,3]
-            random.shuffle(speeds)
-            self.balls.append(Ball(self.canvas, self.paddle, colors.pop(0),speeds[0]))
+            speeds = [2,3,4]
+            self.balls.append(Ball(self.canvas, self.paddle, random.choice(colors), random.choice(speeds)))
     
     # 아래의 키를 리턴해주는 함수
     # ex : (190.0, (246.0, 291.0), (3, 3))
@@ -80,6 +78,7 @@ class Env :
             
     # 한 타임스텝마다 진행되는 함수
     def step(self, action) :
+        
         self.step_cnt += 1
         # next_state 를 구하는 코드
         # 액션을 받아서 패들의 움직임을 정해준다 (다음 state를 구하기 위해)
@@ -90,62 +89,66 @@ class Env :
             self.paddle.setPos(PADDLE_MOVE[rand])
         
         next_state = self.getstate(self.paddle.x)
-        self.reward_path.append([next_state,action])
         
         self.reward += 1
         
+        alives = list()
         for ball in self.balls :
-            ball.draw()
-            if ball.is_miss_paddle():
-                self.reward -= 1000
-                self.done = True
+            alives.append(ball.is_alive)
+            if ball.is_alive :
+                ball.draw()
+            if ball.is_bottom_hit() :
+                ball.is_alive = False
+            elif ball.is_miss_paddle():
+                self.reward -= 100
             elif ball.is_paddle_hit():
-                self.reward += 100
-                self.done = False
+                self.reward += 25
                 self.catch_cnt += 1
                 ball.setPos(ball.x, -ball.start_speed)
         
+        temp = list()
+        for f in range(len(self.balls)) :
+            temp.append(False)
+            
+        if alives == temp :
+            self.done = True
+        
         return next_state, self.reward, self.done
     
-    def get_reward_path(self) :
-        return reversed(self.reward_path)
-    
-    def screen_capture(self,num) :
-        img = ImageGrab.grab(bbox=self.canvas.bbox())
-        img.save('./screen_{}'.format(num))
-        img.show()
-        
 class Ball:
     
-    def __init__(self, canvas, paddle, color, speed=3, x=random.randrange(1,3)) :
+    def __init__(self, canvas, paddle, color, speed=3) :
         self.canvas = canvas
         self.paddle = paddle
         # 공 그리기 25,25 크기로 캔버스 위치 10,10에 넣겠다.
         self.id = canvas.create_oval(10, 10, 25, 25, fill=color) 
         self.speed = speed    
         # 위에 그린 공을 캔버스 위치 245,200에 위치시킨다.
-        self.canvas.move(self.id, 245, 200)
+        self.canvas.move(self.id, 245, 200+random.choice([0,1,2]))
         
-        self.start_x = x
+        starts = [-self.speed,self.speed]
+        self.x = random.choice(starts)
+        self.y = -speed
+        
+        self.start_x = self.x
         # 리셋 후 시작 속도를 일정하게 하기 위한 변수
-        self.start_speed = speed
+        self.start_speed = self.speed
         # 리셋하면 공의 시작 위치를 같게 하기 위한 변수
         self.start_pos = self.canvas.coords(self.id)
         
-        self.x = x
-        self.y = -speed
-        
         self.canvas_width = canvas.winfo_width()
         self.canvas_height = canvas.winfo_height()
-    
+        
+        self.is_alive = True
+        
     def reset(self) :
+        self.is_alive = True
         # overload : 같은 함수 이름인데 다른 기능을 하기 위해 파라미터 개수를 다르게 받아서 사용하는 기능
         # id 를 start 좌표에 위치로 set
         self.canvas.coords(self.id, self.start_pos)
         # 왼쪽으로 갈지 오른쪽으로 갈지 방향 설정
         starts = [-self.speed,self.speed]
-        random.shuffle(starts)
-        self.setPos(starts[0],-self.start_speed)
+        self.setPos(random.choice(starts),-self.start_speed)
         self.canvas.update()
                 
     def draw(self):
@@ -175,8 +178,6 @@ class Ball:
     def is_bottom_hit(self) :
         pos = self.canvas.coords(self.id)
         if pos[3] >= self.canvas_height :
-            self.y = -self.speed
-            self.canvas.move(self.id, self.x, self.y)
             return True
         return False
     
@@ -184,8 +185,6 @@ class Ball:
         paddle_pos = self.canvas.coords(self.paddle.id)
         pos = self.canvas.coords(self.id)
         if self.y > 0 and paddle_pos[3] < pos[1] :
-            self.y = -self.speed
-            self.canvas.move(self.id, self.x, self.y)
             return True
         return False
 

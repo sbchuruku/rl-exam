@@ -16,10 +16,10 @@ class DQN_Agent :
         self.epsilon = 1.0
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
-        self.batch_size = 128
-        self.train_start = 10000
+        self.batch_size = 256
+        self.train_start = 15000
         
-        self.memory = deque(maxlen=20000)
+        self.memory = deque(maxlen=30000)
         
         self.state_size = 1 + (len(env.balls) * 4)
         self.action_size = env.n_actions
@@ -108,6 +108,7 @@ if __name__ == '__main__' :
     agent = DQN_Agent(env)
     
     scores, episodes = list(), list()
+    high_score = 0
     
     if load_episode != 1 :
         agent.load_model(load_episode)
@@ -134,7 +135,9 @@ if __name__ == '__main__' :
             state = next_state
             
             if done :
-                agent.update_target_model()
+                
+                if isLearning :
+                    agent.update_target_model()
                 
                 scores.append(env.catch_cnt)
                 episodes.append(e)
@@ -143,7 +146,8 @@ if __name__ == '__main__' :
                 print('episode:{} / catch:{} / step:{} / epsilon:{} / memory:{}'
                       .format(e, env.catch_cnt, env.step_cnt, agent.epsilon, len(agent.memory)))
                 
-                if e % 100 == 0 :
+                if len(agent.memory) >= agent.train_start and env.catch_cnt > high_score and isLearning :
+                    high_score = env.catch_cnt
                     agent.model.save_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(e))
                     with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.epsilon,f)
