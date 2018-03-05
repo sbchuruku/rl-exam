@@ -8,10 +8,10 @@ from keras.models import Sequential
 from pong import Env
 import pickle
 
-win_path = 'd:\\rl_data\\'
-linux_path = '/home/itwill03/sbc/rl_data/'
+win_path = 'd:\\rl_data\\dqn\\'
+linux_path = '/home/itwill03/sbc/rl_data/dqn/'
 
-current_os = 'win'
+current_os = 'linux'
 
 data_path = ''
 if current_os == 'win' :
@@ -27,10 +27,10 @@ class DQN_Agent :
         self.epsilon = 1.0
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
-        self.batch_size = 128
-        self.train_start = 15000
+        self.batch_size = 256
+        self.train_start = 25000
         
-        self.memory = deque(maxlen=30000)
+        self.memory = deque(maxlen=50000)
         
         self.state_size = 1 + (len(env.balls) * 4)
         self.action_size = env.n_actions
@@ -39,10 +39,10 @@ class DQN_Agent :
         self.target_model = self.build_model()
     
     def load_model(self, episode) :
-        self.model.load_weights(data_path+'dqn\\dqn_trained_{}.h5'.format(episode))
-        with open(data_path+'dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
+        self.model.load_weights(data_path+'dqn_trained_{}.h5'.format(episode))
+        with open(data_path+'epsilon_{}.bin'.format(episode),'rb') as f :
             self.epsilon = pickle.load(f)
-        with open(data_path+'dqn\\memory_{}.bin'.format(episode),'rb') as f :
+        with open(data_path+'memory_{}.bin'.format(episode),'rb') as f :
             self.memory = pickle.load(f)
     
     def build_model(self) :
@@ -109,7 +109,7 @@ class DQN_Agent :
         
 if __name__ == '__main__' :
     
-    EPISODES = 10000
+    EPISODES = 100000
     isLearning = True
     load_episode = 1
     
@@ -155,17 +155,17 @@ if __name__ == '__main__' :
                 mean_scores.append(sum(scores) / len(scores))
                 pylab.plot(episodes, scores, 'b')
                 pylab.plot(episodes, mean_scores, 'r')
-                pylab.savefig(data_path+'dqn\\dqn_result.png')
+                pylab.savefig(data_path+'dqn_result.png')
                 
                 print('episode:{} / catch:{} / step:{} / epsilon:{} / memory:{}'
                       .format(e, env.catch_cnt, env.step_cnt, agent.epsilon, len(agent.memory)))
                 
                 if len(agent.memory) >= agent.train_start and env.catch_cnt > high_score and isLearning :
                     high_score = env.catch_cnt
-                    agent.model.save_weights(data_path+'dqn\\dqn_trained_{}.h5'.format(e))
-                    with open(data_path+'dqn\\epsilon_{}.bin'.format(e),'wb') as f :
+                    agent.model.save_weights(data_path+'dqn_trained_{}.h5'.format(e))
+                    with open(data_path+'epsilon_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.epsilon,f)
-                    with open(data_path+'dqn\\memory_{}.bin'.format(e),'wb') as f :
+                    with open(data_path+'memory_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.memory,f)
                 break
     
