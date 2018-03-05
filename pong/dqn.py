@@ -8,6 +8,17 @@ from keras.models import Sequential
 from pong import Env
 import pickle
 
+win_path = 'd:\\rl_data\\'
+linux_path = '/home/itwill03/sbc/rl_data/'
+
+current_os = 'win'
+
+data_path = ''
+if current_os == 'win' :
+    data_path = win_path
+else :
+    data_path = linux_path
+
 class DQN_Agent :
     def __init__(self, env) :
         # 하이퍼 파라미터        
@@ -28,10 +39,10 @@ class DQN_Agent :
         self.target_model = self.build_model()
     
     def load_model(self, episode) :
-        self.model.load_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(episode))
-        with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
+        self.model.load_weights(data_path+'dqn\\dqn_trained_{}.h5'.format(episode))
+        with open(data_path+'dqn\\epsilon_{}.bin'.format(episode),'rb') as f :
             self.epsilon = pickle.load(f)
-        with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(episode),'rb') as f :
+        with open(data_path+'dqn\\memory_{}.bin'.format(episode),'rb') as f :
             self.memory = pickle.load(f)
     
     def build_model(self) :
@@ -144,17 +155,17 @@ if __name__ == '__main__' :
                 mean_scores.append(sum(scores) / len(scores))
                 pylab.plot(episodes, scores, 'b')
                 pylab.plot(episodes, mean_scores, 'r')
-                pylab.savefig('d:\\rl_data\\dqn\\dqn_result.png')
+                pylab.savefig(data_path+'dqn\\dqn_result.png')
                 
                 print('episode:{} / catch:{} / step:{} / epsilon:{} / memory:{}'
                       .format(e, env.catch_cnt, env.step_cnt, agent.epsilon, len(agent.memory)))
                 
                 if len(agent.memory) >= agent.train_start and env.catch_cnt > high_score and isLearning :
                     high_score = env.catch_cnt
-                    agent.model.save_weights('d:\\rl_data\\dqn\\dqn_trained_{}.h5'.format(e))
-                    with open('d:\\rl_data\\dqn\\epsilon_{}.bin'.format(e),'wb') as f :
+                    agent.model.save_weights(data_path+'dqn\\dqn_trained_{}.h5'.format(e))
+                    with open(data_path+'dqn\\epsilon_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.epsilon,f)
-                    with open('d:\\rl_data\\dqn\\memory_{}.bin'.format(e),'wb') as f :
+                    with open(data_path+'dqn\\memory_{}.bin'.format(e),'wb') as f :
                         pickle.dump(agent.memory,f)
                 break
     
