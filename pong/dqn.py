@@ -107,7 +107,7 @@ if __name__ == '__main__' :
 
     agent = DQN_Agent(env)
     
-    scores, episodes = list(), list()
+    scores,mean_scores,episodes = list(),list(),list()
     high_score = 0
     
     if load_episode != 1 :
@@ -141,8 +141,11 @@ if __name__ == '__main__' :
                 
                 scores.append(env.catch_cnt)
                 episodes.append(e)
+                mean_scores.append(sum(scores) / len(scores))
                 pylab.plot(episodes, scores, 'b')
+                pylab.plot(episodes, mean_scores, 'r')
                 pylab.savefig('d:\\rl_data\\dqn\\dqn_result.png')
+                
                 print('episode:{} / catch:{} / step:{} / epsilon:{} / memory:{}'
                       .format(e, env.catch_cnt, env.step_cnt, agent.epsilon, len(agent.memory)))
                 
