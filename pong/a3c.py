@@ -153,9 +153,11 @@ class Agent(threading.Thread):
     def __init__(self, model, sess, optimizer, discount_factor, summary_ops):
         threading.Thread.__init__(self)
         
-        # A3CAgent 클래스에서 상속
+        # 환경 구축
         self.env = Env()
         self.env.addBall(1)
+        
+        # A3CAgent 클래스에서 상속
         self.state_size = 1 + (len(self.env.balls) * 4)
         self.action_size = self.env.n_actions
         self.actor, self.critic = model
@@ -166,7 +168,7 @@ class Agent(threading.Thread):
          self.update_ops, self.summary_writer] = summary_ops
 
         # 지정된 타임스텝동안 샘플을 저장할 리스트
-        self.states, self.actions, self.rewards = [], [], []
+        self.states, self.actions, self.rewards = list(), list(), list()
 
         # 로컬 모델 생성
         self.local_actor, self.local_critic = self.build_local_model()
@@ -181,7 +183,6 @@ class Agent(threading.Thread):
     def run(self):
         global episode
 
-        step = 0
         isLearning = True
 
         while episode < EPISODES:
@@ -191,19 +192,21 @@ class Agent(threading.Thread):
             state = self.env.reset()
             state = self.state_flatten(self.env, state)
 
-            history = np.stack((state, state, state, state), axis=2)
+            history = np.stack((state, state, state, state, state))
 
             while not done:
+                self.t += 1
                 self.env.render(isLearning)
             
                 action = self.get_action(state)
                 next_state, reward, done = self.env.step(action)
                 next_state = self.state_flatten(self.env, next_state)
                 
-                next_history = np.append(next_state, history[:, :, :, :3], axis=3)
+                next_history = np.append(next_state, history[:4, :])
+                next_history = np.reshape(next_history, history.shape)
 
                 # 정책의 최대값
-                self.avg_p_max += np.amax(self.actor.predict(np.float32(history / 255.)))
+                self.avg_p_max += np.amax(self.actor.predict(np.float32(history)))
 
                 score += reward
                 reward = np.clip(reward, -1., 1.)
@@ -220,11 +223,9 @@ class Agent(threading.Thread):
                 if done:
                     # 각 에피소드 당 학습 정보를 기록
                     episode += 1
-                    print("episode:", episode, "  score:", score, "  step:",
-                          step)
+                    print('episode:{} / catch:{} / step:{}'.format(episode, self.env.catch_cnt, self.env.step_cnt))
 
-                    stats = [score, self.avg_p_max / float(step),
-                             step]
+                    stats = [score, self.avg_p_max / float(self.env.step_cnt), self.env.step_cnt]
                     for i in range(len(stats)):
                         self.sess.run(self.update_ops[i], feed_dict={
                             self.summary_placeholders[i]: float(stats[i])
@@ -233,7 +234,6 @@ class Agent(threading.Thread):
                     self.summary_writer.add_summary(summary_str, episode + 1)
                     self.avg_p_max = 0
                     self.avg_loss = 0
-                    step = 0
 
     # k-스텝 prediction 계산
     def discounted_prediction(self, rewards, done):
@@ -241,23 +241,23 @@ class Agent(threading.Thread):
         running_add = 0
 
         if not done:
-            running_add = self.critic.predict(np.float32(
-                self.states[-1] / 255.))[0]
+            running_add = self.critic.predict(np.float32(self.states[-1]))[0]
 
         for t in reversed(range(0, len(rewards))):
             running_add = running_add * self.discount_factor + rewards[t]
             discounted_prediction[t] = running_add
+            
         return discounted_prediction
 
     # 정책신경망과 가치신경망을 업데이트
     def train_model(self, done):
         discounted_prediction = self.discounted_prediction(self.rewards, done)
-
+        
         states = np.zeros((len(self.states), 84, 84, 4))
         for i in range(len(self.states)):
             states[i] = self.states[i]
 
-        states = np.float32(states / 255.)
+        states = np.float32(states)
 
         values = self.critic.predict(states)
         values = np.reshape(values, len(values))
@@ -298,7 +298,7 @@ class Agent(threading.Thread):
 
     # 정책신경망의 출력을 받아서 확률적으로 행동을 선택
     def get_action(self, history):
-        history = np.float32(history / 255.)
+        history = np.float32(history)
         policy = self.local_actor.predict(history)[0]
         action_index = np.random.choice(self.action_size, 1, p=policy)[0]
         return action_index, policy
